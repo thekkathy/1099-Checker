@@ -9,11 +9,31 @@ export const FileUpload = () => {
     const [uploadedFile, setUploadedFile] = useState({});
     const [message, setMessage] = useState('');
     const [errorPresent, setErrorPresent] = useState(false);
+    const [preventSubmitError, setPreventSubmitError] = useState(false);
+
+    const types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']
 
     const onUpload = e => {
-        setFile(e.target.files[0]);
-        setFilename(e.target.files[0].name);
-        console.log("on upload");
+        const selected = e.target.files[0];
+        //if there's a file and it's an allowed type, set file = selected
+        if (selected && types.includes(selected.type)) {
+            setFile(selected);
+            setFilename(selected.name);
+            //reset error
+            setMessage('');
+        }
+        //if we have an error
+        else {
+            //reset the file to null
+            setFile(null);
+            setMessage('Please select an excel file');
+            setErrorPresent(true);
+            setPreventSubmitError(true);
+        }
+
+        // setFile(e.target.files[0]);
+        // setFilename(e.target.files[0].name);
+        // console.log("on upload");
     }
 
     const onSubmit = async e => {
@@ -40,15 +60,17 @@ export const FileUpload = () => {
                 setErrorPresent(true);
             }
             else {
-                setMessage(err.response.data.msg);
-                setErrorPresent(true);
+                if (!preventSubmitError) {
+                    setMessage(err.response.data.msg);
+                    setErrorPresent(true);
+                }
             }
         };
     }
 
     return (
         <Fragment>
-            {message ? <Message msg={message} errPres={errorPresent}/> : null}
+            {message ? <Message msg={message} errPres={errorPresent} /> : null}
             <form onSubmit={onSubmit}>
                 <div className="custom-file mb-4">
                     <input type="file" className="custom-file-input" id="customFile" onChange={onUpload} />
