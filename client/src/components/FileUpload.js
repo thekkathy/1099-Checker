@@ -1,15 +1,22 @@
 import React, { Fragment, useState } from 'react';
 import Message from './Message'
+import Progress from './Progress'
 import axios from 'axios';
 
 export const FileUpload = () => {
+    //file handling
     const [file, setFile] = useState('');
     const [filename, setFilename] = useState('Choose File');
     //server is sending back object, so this is an object
     const [uploadedFile, setUploadedFile] = useState({});
+
+    //error handling
     const [message, setMessage] = useState('');
     const [errorPresent, setErrorPresent] = useState(false);
     const [preventSubmitError, setPreventSubmitError] = useState(false);
+
+    //upload %
+    const [uploadPercent, setUploadPercent] = useState(0);
 
     const types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']
 
@@ -26,27 +33,36 @@ export const FileUpload = () => {
         else {
             //reset the file to null
             setFile(null);
+            // set the errors and make sure that a 'File not found' error doesn't overwrite file type error
             setMessage('Please select an excel file');
             setErrorPresent(true);
             setPreventSubmitError(true);
         }
-
-        // setFile(e.target.files[0]);
-        // setFilename(e.target.files[0].name);
-        // console.log("on upload");
     }
 
     const onSubmit = async e => {
         e.preventDefault();
+        setUploadPercent(0);
         const formData = new FormData();
         //append it to file in backend
         formData.append('file', file);
 
         try {
-            const res = await axios.post('/upload', formData, {
+            const res = await axios.put('/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: progressEvent => {
+                    setUploadPercent(
+                        parseInt(
+                            Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                        )
+                    )
+                    //Clear percentage
+                    setTimeout(() => setUploadPercent(0), 4000);
                 }
+
+
             });
 
             const { fileName, filePath } = res.data;
@@ -78,6 +94,8 @@ export const FileUpload = () => {
                         {filename}
                     </label>
                 </div>
+
+                <Progress percentage={uploadPercent}/>
 
                 <input type="submit" value="Upload" className="btn btn-primary btn-block mt-4" />
             </form>
