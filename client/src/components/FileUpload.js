@@ -89,18 +89,11 @@ export const FileUpload = () => {
         // };
     }
 
-    const inputIsCorrect = (regex, valueToCheck) => {
-        var passed = valueToCheck.match(regex);
-        console.log(passed);
-        if (passed){
-            return true;
-        }
-        else{
-            return false;
-        }
-    }
 
     const checkCOR_INT = (data) => {
+        var passed = true;
+
+        //for every item in the sheet
         for (var i = 0; i < data.length; i++) {
             var companyData = data[i];
             const dataKeys = Object.keys(data[0]);
@@ -110,8 +103,9 @@ export const FileUpload = () => {
             const alphanum = /^[A-Za-z\d ]{1,50}$/g;
             for (var k = 0; k < 4; k++){
                 var key = dataKeys[k];
-                var val = companyData[key];
-                if(inputIsCorrect(alphanum, val)){
+                var valueToCheck = companyData[key];
+                passed = valueToCheck.match(alphanum);
+                if(passed){
                     console.log(key + " correct");
                 }
                 else{
@@ -120,13 +114,25 @@ export const FileUpload = () => {
             }
 
             //check ZIP, EIN
-            const zipCheck = /^\d{1,9}$/g;
-            var zip = companyData[dataKeys[4]].toString();
-            console.log("zip " + inputIsCorrect(zipCheck, zip))
+            const nineDigitCheck = 100000000;
 
-            const einCheck = /^\d{9}$/g;
-            var ein = companyData[dataKeys[5]].toString();
-            console.log("ein " + inputIsCorrect(einCheck, ein))
+            var zip = companyData[dataKeys[4]];
+            passed = typeof zip == "number" && Number.isInteger(zip) && zip/nineDigitCheck < 10;
+            if(passed){
+                console.log("zip correct");
+            }
+            else{
+                console.log("zip incorrect");
+            }
+
+            var ein = companyData[dataKeys[5]];
+            passed = typeof ein == "number" && Number.isInteger(ein) && ein/nineDigitCheck < 10 && ein/nineDigitCheck >= 1;
+            if(passed){
+                console.log("ein correct");
+            }
+            else{
+                console.log("ein incorrect");
+            }
 
             //check interest
             var interest = companyData[dataKeys[6]];
@@ -134,7 +140,7 @@ export const FileUpload = () => {
                 console.log("interest correct");
             }
             else{
-                console.log("interest incorrect")
+                console.log("interest incorrect");
             }
         }
 
