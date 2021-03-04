@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import FileUploadAndChecker from './FileUploadAndChecker';
 
 const App = () => {
-  const [formType, setFormType] = useState("cor_int")
+  const [formType, setFormType] = useState(null)
 
   const formNames = {
     'cor_int': '1099 COR INT',
@@ -22,48 +22,52 @@ const App = () => {
 
       {/* Menu to select which form to check */}
       <div className="container">
-        <div className="row my-2">
-          <div className="btn-group" role="group" aria-label="Choose Form Type">
-            {/* Select INT type form */}
-            <div className="btn-group" role="group">
-              <button id="INT" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                INT
+        <div className="container">
+          <div className="row my-2">
+            <div className="btn-group mx-auto" role="group" aria-label="Choose Form Type">
+              {/* Select INT type form */}
+              <div className="btn-group" role="group">
+                <button id="INT" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  INT
               </button>
-              <div className="dropdown-menu" aria-labelledby="INT">
-                <button className="dropdown-item" onClick={() => setFormType("cor_int")}>COR</button>
-                <button className="dropdown-item" onClick={() => setFormType("ubo_int")}>UBO</button>
+                <div className="dropdown-menu" aria-labelledby="INT">
+                  <button className="dropdown-item" onClick={() => setFormType("cor_int")}>COR</button>
+                  <button className="dropdown-item" onClick={() => setFormType("ubo_int")}>UBO</button>
+                </div>
               </div>
-            </div>
-            {/* Select MISC type form */}
-            <div className="btn-group" rolw="group">
-              <button id="MISC" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                MISC
-              </button>
-              <div className="dropdown-menu" aria-labelledby="MISC">
-                <button className="dropdown-item" onClick={() => setFormType("dss_misc")}>DSS</button>
-                <button className="dropdown-item" onClick={() => setFormType("finance_misc")}>Finance</button>
+              {/* Select MISC type form */}
+              <div className="btn-group" rolw="group">
+                <button id="MISC" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  MISC
+                </button>
+                <div className="dropdown-menu" aria-labelledby="MISC">
+                  <button className="dropdown-item" onClick={() => setFormType("dss_misc")}>DSS</button>
+                  <button className="dropdown-item" onClick={() => setFormType("finance_misc")}>Finance</button>
+                </div>
               </div>
-            </div>
-            {/* Select NEC type form */}
-            <div className="btn-group" rolw="group">
-              <button id="NEC" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                NEC
+              {/* Select NEC type form */}
+              <div className="btn-group" rolw="group">
+                <button id="NEC" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  NEC
               </button>
-              <div className="dropdown-menu" aria-labelledby="NEC">
-                <button className="dropdown-item" onClick={() => setFormType("dss_nec")}>DSS</button>
-                <button className="dropdown-item" onClick={() => setFormType("finance_nec")}>Finance</button>
+                <div className="dropdown-menu" aria-labelledby="NEC">
+                  <button className="dropdown-item" onClick={() => setFormType("dss_nec")}>DSS</button>
+                  <button className="dropdown-item" onClick={() => setFormType("finance_nec")}>Finance</button>
+                </div>
               </div>
             </div>
           </div>
+          <div className="row my-2">
+            <div className="container d-flex justify-content-center">
+              {formType ? `Selected ${formNames[formType]} for checking` : null}
+            </div>
         </div>
-        <div className="row my-2">
-          {formNames[formType]} Selected
         </div>
         <div className="row my-4">
           <FileUploadAndChecker formType={formType} />
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

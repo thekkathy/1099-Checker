@@ -1,0 +1,47 @@
+[33mcommit c08917b4e27a5e72b98bf8c4e20731a14a56196c[m[33m ([m[1;36mHEAD -> [m[1;32mdirectly-read-xlsx[m[33m)[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Thu Mar 4 13:31:35 2021 -0500
+
+    Can choose which file to check
+
+[33mcommit b5e83fea4d151325db5c14ec1b0163bbc678d5f1[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 19 17:32:54 2021 -0500
+
+    refactored COR_INT check code
+
+[33mcommit 5b3de7a71766b0f37872dad429ff4cebbd1a13a2[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 19 17:16:29 2021 -0500
+
+    COR_INT check working
+
+[33mcommit a7129026ab382fbe7317501713dfeaabbc3de413[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 19 13:37:40 2021 -0500
+
+    testing branch
+
+[33mcommit 1d1dd2b58d5aa27082e32fa06311da3082dbdafa[m[33m ([m[1;32mmaster[m[33m)[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 19 13:31:05 2021 -0500
+
+    Can upload files of the same name without error
+
+[33mcommit 2a9527d6f68272b8ed330c9323dcafa250b757c7[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 12 14:37:27 2021 -0500
+
+    Only lets users submit excel files now
+
+[33mcommit 877b6760d1da12c11665ba876ebb19041ff5cb27[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 12 14:29:10 2021 -0500
+
+    added pop up messages
+
+[33mcommit 60271ee2ce9c0192b0b735448412b64a27cd4998[m
+Author: Kathy Kang <kck3due@virginia.edu>
+Date:   Fri Feb 12 13:56:27 2021 -0500
+
+    Initial commit, file upload display

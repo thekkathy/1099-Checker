@@ -7,6 +7,8 @@ export const FileUploadAndChecker = ({ formType }) => {
     // true = formated correctly
     // false = formated incorrectly
     const [message, setMessage] = useState([]);
+    // name of uploaded file
+    const [fileName, setFileName] = useState('Choose File')
 
     const types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']
 
@@ -208,14 +210,13 @@ export const FileUploadAndChecker = ({ formType }) => {
     return (
         <Fragment>
 
-            <input type="file" onChange={(e) => {
-                const file = e.target.files[0];
-                readExcel(file);
-            }} />
-
             <div className="custom-file mb-3">
-                <input type="file" className="custom-file-input" id="customFile" name="filename" />
-                <label class="custom-file-label" for="customFile">Choose file</label>
+                <input type="file" className="custom-file-input" id="customFile" name="filename" onChange={(e) => {
+                    const file = e.target.files[0];
+                    setFileName(file.name);
+                    readExcel(file);
+                }} />
+                <label class="custom-file-label" for="customFile">{fileName}</label>
             </div>
 
             {message ? message.map(reqs => (
