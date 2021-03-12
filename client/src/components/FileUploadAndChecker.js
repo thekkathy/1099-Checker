@@ -1,14 +1,19 @@
 import React, { Fragment, useState } from 'react';
 import XLSX from 'xlsx';
+import Message from './Message';
 
-export const FileUploadAndChecker = ({ formType }) => {
+export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFunct }) => {
     // list of objects that keeps track of which messages for each label
     // [{label: company name, passes: true}, {label: company address, passes: true}, ...]
     // true = formated correctly
     // false = formated incorrectly
-    const [message, setMessage] = useState([]);
+    const [message, setMessage] = useState(null);
+    // variable that keeps track of if everything passed
+    const [allPassed, setAllPassed] = useState(true)
     // name of uploaded file
-    const [fileName, setFileName] = useState('Choose File')
+    const [fileName, setFileName] = useState('Choose File');
+    // error message
+    const [errorMessage, setErrorMessage] = useState("");
 
     const types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']
 
@@ -21,19 +26,12 @@ export const FileUploadAndChecker = ({ formType }) => {
         let req = {};
         let label = name + " " + key;
 
-        if (passed) {
-            console.log(key + " correct");
-            // below lines for debug
-            // req["label"] = label;
-            // req["passes"] = "Passes";
-            // formatList.push(req);
-        }
-        else {
-            console.log(key + " incorrect");
+        if (!passed) {
             req["label"] = label;
             req["passes"] = errorMessage;
             formatList.push(req);
         }
+
     }
 
     //checks if the inputted value contains only numbers and letters and is below 50 characters
@@ -92,6 +90,26 @@ export const FileUploadAndChecker = ({ formType }) => {
         updateMessages(name, passed, label, format, errorMessage);
     }
 
+    //check if headers for the form are correct
+    //if headers are incorrect, set the error message and return false
+    const checkHeaders = (expectedLabels, actualLabels, errMessage) => {
+        if (expectedLabels.length != actualLabels.length) {
+            errorMessageFunct(errMessage);
+            return false;
+        }
+        for (var i = 0; i < expectedLabels.length; i++) {
+            if (!expectedLabels[i].includes(actualLabels[i])) {
+
+                console.log(actualLabels[i]);
+                console.log(expectedLabels[i]);
+
+                errorMessageFunct(errMessage);
+                return false;
+            }
+        }
+        return true;
+    }
+
 
 
     //** CHECK FORM FUNCTIONS  **//
@@ -99,11 +117,19 @@ export const FileUploadAndChecker = ({ formType }) => {
     //checks if a COR_INT file is formatted correctly
     const checkCOR_INT = (data) => {
         let messages = [];
+        const actualLabels = ["Name", "Address", "City", "State", "Zip", "EIN", "Interest"];
+        const headerErrorMessage = "File headers are incorrect or selected file is not a 1099 COR INT file.";
 
         //for every item in the sheet
         for (var i = 0; i < data.length; i++) {
             var companyData = data[i];
             const dataKeys = Object.keys(data[0]);
+            console.log(dataKeys);
+
+            //check if headers are correct
+            if (!checkHeaders(dataKeys, actualLabels, headerErrorMessage)) {
+                break;
+            }
 
             //get company name
             let name = companyData[dataKeys[0]];
@@ -124,6 +150,12 @@ export const FileUploadAndChecker = ({ formType }) => {
             var interest = dataKeys[6];
             checkFloat(name, interest, messages, companyData);
         }
+        if (messages.length > 0) {
+            setAllPassed(false);
+        }
+        if (messages.length == 0) {
+            setAllPassed(true);
+        }
         return messages;
 
     }
@@ -131,12 +163,19 @@ export const FileUploadAndChecker = ({ formType }) => {
     //checks if a UBO_INT file is formatted correctly
     const checkUBO_INT = (data) => {
         let messages = [];
+        const actualLabels = ["Cont Acct", "Name", "Name 2", "House number and street", "City", "Zip Code", "Rg", "LC Amount", "SSN"];
+        const headerErrorMessage = "File headers are incorrect or selected file is not a 1099 UBO INT file.";
 
         //for every item in the sheet
         for (var i = 0; i < data.length; i++) {
             var personData = data[i];
             const dataKeys = Object.keys(data[0]);
             console.log(dataKeys);
+
+            //check if headers are correct
+            if (!checkHeaders(dataKeys, actualLabels, headerErrorMessage)) {
+                break;
+            }
 
             //get the person's name
             let name = personData[dataKeys[1]] + " " + personData[dataKeys[2]];
@@ -165,6 +204,9 @@ export const FileUploadAndChecker = ({ formType }) => {
 
     }
 
+
+    //** OTHER FUNCTIONS **//
+
     //function that executes appropriate check form function based on form type
     const checkForm = (data) => {
         if (formType == "cor_int") {
@@ -174,7 +216,20 @@ export const FileUploadAndChecker = ({ formType }) => {
             return checkUBO_INT(data);
         }
         else {
-            return "Error in check form"
+            throw new Error("Have not implemented yet");
+        }
+    }
+
+    //make sure that the uploaded file is an excel spreadsheet or csv
+    //returns true if the file is a spreadsheet, false otherwise
+    const isSpreadsheet = (file) => {
+        //if there's a file and it's an allowed type, set file = selected
+        if (file && types.includes(file.type)) {
+            return true;
+        }
+        //if we have an error
+        else {
+            return false
         }
     }
 
@@ -210,28 +265,55 @@ export const FileUploadAndChecker = ({ formType }) => {
     return (
         <Fragment>
 
-            <div className="custom-file mb-3">
-                <input type="file" className="custom-file-input" id="customFile" name="filename" onChange={(e) => {
-                    const file = e.target.files[0];
-                    setFileName(file.name);
-                    readExcel(file);
-                }} />
-                <label class="custom-file-label" for="customFile">{fileName}</label>
-            </div>
+            <div className="container mx-auto">
+                <div className="row">
+                    <div className="card mx-auto w-100 p-3">
+                        <div className="card-title mx-auto lead">2. Choose a file: </div>
+                        <div className="custom-file">
+                            <input type="file" className="custom-file-input" id="customFile" name="filename" onChange={(e) => {
+                                clearErrorFunct();
+                                try {
+                                    const file = e.target.files[0];
+                                    setFileName(file.name);
 
-            {message ? message.map(reqs => (
-                <div key={reqs.label}>
-                    <div>{reqs.label}</div>
-                    <div>{reqs.passes}</div>
+                                    //did a person decide what type of form that they want to check?
+                                    if (!formType) {
+                                        throw new Error("Please select the type of form you want to check from the dropdown menu.");
+                                    }
+                                    //is the file an excel spreadsheet?
+                                    if (isSpreadsheet(file)) {
+                                        readExcel(file);
+                                    }
+                                    else {
+                                        errorMessageFunct("Please choose an Excel or CSV file.")
+                                    }
+                                }
+                                catch (err) {
+                                    errorMessageFunct(err.message);
+                                }
+                            }} />
+                            <label className="custom-file-label" htmlFor="customFile">{fileName}</label>
+                        </div>
+                    </div>
                 </div>
-            )) :
-                <div>
-                    No Errors
+                <div className="row my-4 mx-auto">
+                    <Message message={message} allPassed={allPassed}></Message>
+                </div>
             </div>
-            }
 
         </Fragment>
     )
 }
+
+// {message ? message.map(reqs => (
+//     <div key={reqs.label}>
+//         <div>{reqs.label}</div>
+//         <div>{reqs.passes}</div>
+//     </div>
+// )) :
+//     <div>
+//         No Errors
+// </div>
+// }
 
 export default FileUploadAndChecker
