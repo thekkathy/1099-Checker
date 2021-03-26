@@ -21,6 +21,7 @@ const Message = ({ message, allPassed }) => {
             <div className="card-title mx-auto lead">Errors: </div>
                 <div className="card-body mx-auto">
                     {allPassed && message ? <strong className="container text-success">No errors found!</strong> : <div>{errorLog}</div>}
+                    {!allPassed && !message && <strong className="container text-danger">Check error message above</strong>}
                 </div>
             </div>
         </div>

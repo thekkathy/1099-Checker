@@ -78,7 +78,7 @@ const App = () => {
           <div className="row my-2">
             <div className="container d-flex justify-content-center">
               {formType ?
-                <div class="alert alert-info" role="alert">
+                <div className="alert alert-info" role="alert">
                   Selected {formNames[formType]} for checking
                 </div>
                 : null}

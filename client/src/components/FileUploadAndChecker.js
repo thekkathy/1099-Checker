@@ -12,8 +12,6 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
     const [allPassed, setAllPassed] = useState(true)
     // name of uploaded file
     const [fileName, setFileName] = useState('Choose File');
-    // error message
-    const [errorMessage, setErrorMessage] = useState("");
 
     const types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']
 
@@ -22,32 +20,63 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
 
     //if a label is formatted correctly, the message is set to null
     //if a lbel is incorrect, an error message will be added
-    const updateMessages = (name, passed, key, formatList, errorMessage) => {
+    const updateMessages = (name, passed, key, formatList, errorMessage, rowNum) => {
         let req = {};
         let label = name + " " + key;
 
         if (!passed) {
-            req["label"] = label;
+            req["label"] = label + " at row " + rowNum.toString();
             req["passes"] = errorMessage;
             formatList.push(req);
         }
 
     }
 
-    //checks if the inputted value contains only numbers and letters and is below 50 characters
+    //return true if there is no value (e.g. valueToCheck == '')
+    const checkEmpty = (valueToCheck) => {
+        if(valueToCheck === '' || valueToCheck === undefined){
+            return true;
+        }
+        return false
+    }
+
+    //checks if the inputted value contains only numbers and letters and is below the specified length
     //alphaIdx = the index locations of teh keys that you want to check w/ alphanum from dataKeys
     //name = the name of the company or person
     //format = the format object updateMessages updates
     //dataKeys = the labels in the form (e.g. name, zip)
     //indivData = one company/person's information
-    const checkAlphanum = (alphaIdx, name, format, dataKeys, indivData) => {
-        const alphanum = /^[A-Za-z\d ]{1,50}$/g;
+    //rowNm = the row number being checked
+    //length = the max length of the input, -1 if there is no max length
+    const checkAlphanum = (alphaIdx, name, format, dataKeys, indivData, rowNum, length) => {
+        let emptyVal = false;
+        let alphanum = null;
+        let errorMessage = "";
+        if(length < 0){
+            alphanum = /^[A-Za-z0-9 ]*$/g;
+            errorMessage = name + " " + key + " must contain only letters and whole numbers.";
+        }
+        else{
+            const alphanumStr = "^[A-Za-z0-9 ]{1,length}$".replace('length', length);
+            alphanum = new RegExp(alphanumStr);
+            errorMessage = name + " " + key + ` must contain only letters and whole numbers. The input also cannot be over ${length} characters.`;
+        }
         for (var k = 0; k < alphaIdx.length; k++) {
             var key = dataKeys[alphaIdx[k]];
-            var valueToCheck = indivData[key];
+            var valueToCheck = indivData[key].toString();
+            if(checkEmpty(valueToCheck) && length > 0){
+                emptyVal = true;
+                break;
+            }
             let passed = valueToCheck.match(alphanum);
-            let errorMessage = "\"" + name + " " + key + "\" must contain only letters and whole numbers. The input also cannot be over 50 characters.";
-            updateMessages(name, passed, key, format, errorMessage);
+            if(length < 0){
+                passed = "empty";
+            }
+            updateMessages(name, passed, key, format, errorMessage, rowNum);
+        }
+        if(emptyVal){
+            errorMessage = "No " + key + " at row " + rowNum.toString();
+            updateMessages(name, false, key, format, errorMessage, rowNum);
         }
 
     }
@@ -57,12 +86,31 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
     //label = the label of the input (e.g. name, zip, etc)
     //format = the format object updateMessages updates
     //indivData = one company/person's information
-    const checkLeqNineDigits = (name, label, format, indivData) => {
+    const checkLeqNineDigits = (name, label, format, indivData, allowZipDashes=false, rowNum) => {
         const nineDigitCheck = 100000000;
         var valueToCheck = indivData[label];
-        let passed = typeof valueToCheck == "number" && Number.isInteger(valueToCheck) && valueToCheck / nineDigitCheck < 10;
+        let emptyVal = false;
+        if(checkEmpty(valueToCheck)){
+            emptyVal = true;
+            let errorMessage = "No " + label + " at row " + rowNum.toString();
+            updateMessages(name, false, label, format, errorMessage, rowNum);
+            return;
+        }
+        let passed = true;
+        if(allowZipDashes){
+            const allowedCharacters = /[\d-]+/g;
+            if(typeof valueToCheck == "number"){
+                passed = typeof valueToCheck == "number" && Number.isInteger(valueToCheck) && valueToCheck / nineDigitCheck < 10;
+            }
+            else{
+                passed = valueToCheck.match(allowedCharacters) && parseInt(valueToCheck.replace('-', '')) / nineDigitCheck < 10;
+            }
+        }
+        else{
+            passed = typeof valueToCheck == "number" && Number.isInteger(valueToCheck) && valueToCheck / nineDigitCheck < 10;
+        }
         let errorMessage = label + " must contain only whole numbers and cannot exceed 9 characters.";
-        updateMessages(name, passed, label, format, errorMessage);
+        updateMessages(name, passed, label, format, errorMessage, rowNum);
     }
 
     //checks if an input contains only digits and is 9 characters
@@ -70,12 +118,17 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
     //label = the label of the input (e.g. name, zip, etc)
     //format = the format object updateMessages updates
     //indivData = one company/person's information
-    const checkNineDigits = (name, label, format, indivData) => {
+    const checkNineDigits = (name, label, format, indivData, rowNum) => {
         const nineDigitCheck = 100000000;
         var valueToCheck = indivData[label];
+        if(checkEmpty(valueToCheck)){
+            let errorMessage = "No " + label + " at row " + rowNum.toString();
+            updateMessages(name, false, label, format, errorMessage, rowNum);
+            return;
+        }
         let passed = typeof valueToCheck == "number" && Number.isInteger(valueToCheck) && valueToCheck / nineDigitCheck < 10 && valueToCheck / nineDigitCheck >= 1;
         let errorMessage = label + " must be 9 digits and must only contain whole numbers.";
-        updateMessages(name, passed, label, format, errorMessage);
+        updateMessages(name, passed, label, format, errorMessage, rowNum);
     }
 
     //checks if an input is a float
@@ -83,11 +136,46 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
     //label = the label of the input (e.g. name, zip, etc)
     //format = the format object updateMessages updates
     //indivData = one company/person's information
-    const checkFloat = (name, label, format, indivData) => {
+    const checkFloat = (name, label, format, indivData, rowNum) => {
         var valueToCheck = indivData[label];
+        if(checkEmpty(valueToCheck)){
+            let errorMessage = "No " + label + " at row " + rowNum.toString();
+            updateMessages(name, false, label, format, errorMessage, rowNum);
+            return;
+        }
         let passed = typeof valueToCheck == "number";
         let errorMessage = label + " must be a number (can be a whole number or a decimal)";
-        updateMessages(name, passed, label, format, errorMessage);
+        updateMessages(name, passed, label, format, errorMessage, rowNum);
+    }
+
+    //checks if an input is a varchar of the provided length
+    //name = the name of the company or person
+    //label = the label of the input (e.g. name, zip, etc)
+    //format = the format object updateMessages updates
+    //indivData = one company/person's information
+    const checkVarchar = (name, label, format, indivData, rowNum, length) => {
+        var valueToCheck = indivData[label];
+        if(checkEmpty(valueToCheck) && length > 0){
+            let errorMessage = "No " + label + " at row " + rowNum.toString();
+            updateMessages(name, false, label, format, errorMessage, rowNum);
+            return;
+        }
+        let alpha = null;
+        let errorMessage = "";
+        if(length < 0){
+            alpha = /^[A-Za-z]*$/g;
+            errorMessage = label + " must contain only letters";
+        }
+        else{
+            const alphaStr = "^[A-Za-z]{1,length}$".replace('length', length);
+            alpha = new RegExp(alphaStr);
+            errorMessage = label + ` must contain only letters and be less than ${length} characters`;
+        }
+        let passed = valueToCheck.match(alpha);
+        if(length < 0){
+            passed = ["empty ok"];
+        }
+        updateMessages(name, passed, label, format, errorMessage, rowNum);
     }
 
     //check if headers for the form are correct
@@ -98,9 +186,11 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
             return false;
         }
         for (var i = 0; i < expectedLabels.length; i++) {
-            if (!expectedLabels[i].includes(actualLabels[i])) {
+            if (!expectedLabels[i].toLowerCase().includes(actualLabels[i].toLowerCase())) {
 
+                console.log("actual labels")
                 console.log(actualLabels[i]);
+                console.log("expected labels")
                 console.log(expectedLabels[i]);
 
                 errorMessageFunct(errMessage);
@@ -110,15 +200,14 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
         return true;
     }
 
-
-
     //** CHECK FORM FUNCTIONS  **//
 
     //checks if a COR_INT file is formatted correctly
     const checkCOR_INT = (data) => {
         let messages = [];
         const actualLabels = ["Name", "Address", "City", "State", "Zip", "EIN", "Interest"];
-        const headerErrorMessage = "File headers are incorrect or selected file is not a 1099 COR INT file.";
+        const headerErrorMessage = `Selected file is not a 1099 COR INT file or file headers are incorrect. Please make sure that the right file was selected and that the headers match this order and casing: ${actualLabels. join(", ")}`;
+        let headerErrorPresent = false;
 
         //for every item in the sheet
         for (var i = 0; i < data.length; i++) {
@@ -128,6 +217,7 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
 
             //check if headers are correct
             if (!checkHeaders(dataKeys, actualLabels, headerErrorMessage)) {
+                headerErrorPresent = true;
                 break;
             }
 
@@ -136,26 +226,21 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
 
             //check address, city, state
             const alphaIdx = [0, 1, 2, 3];
-            checkAlphanum(alphaIdx, name, messages, dataKeys, companyData);
+            checkAlphanum(alphaIdx, name, messages, dataKeys, companyData, i+2, 50);
 
             //check zip
             const zip = dataKeys[4];
-            checkLeqNineDigits(name, zip, messages, companyData);
+            checkLeqNineDigits(name, zip, messages, companyData, true, i+2);
 
             //check EIN
             var ein = dataKeys[5];
-            checkNineDigits(name, ein, messages, companyData);
+            checkNineDigits(name, ein, messages, companyData, i+2);
 
             //check interest
             var interest = dataKeys[6];
-            checkFloat(name, interest, messages, companyData);
+            checkFloat(name, interest, messages, companyData, i+2);
         }
-        if (messages.length > 0) {
-            setAllPassed(false);
-        }
-        if (messages.length == 0) {
-            setAllPassed(true);
-        }
+        checkAllPassed(messages, headerErrorPresent);
         return messages;
 
     }
@@ -164,7 +249,8 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
     const checkUBO_INT = (data) => {
         let messages = [];
         const actualLabels = ["Cont Acct", "Name", "Name 2", "House number and street", "City", "Zip Code", "Rg", "LC Amount", "SSN"];
-        const headerErrorMessage = "File headers are incorrect or selected file is not a 1099 UBO INT file.";
+        const headerErrorMessage = `Selected file is not a 1099 UBO INT file or file headers are incorrect. Please make sure that the right file was selected and that the headers match this order and casing: ${actualLabels. join(", ")}`;
+        let headerErrorPresent = false;
 
         //for every item in the sheet
         for (var i = 0; i < data.length; i++) {
@@ -174,6 +260,7 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
 
             //check if headers are correct
             if (!checkHeaders(dataKeys, actualLabels, headerErrorMessage)) {
+                headerErrorPresent = true;
                 break;
             }
 
@@ -182,30 +269,98 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
 
             //check name, name2, house number and street
             const alphaIdx = [1, 2, 3, 4, 6]
-            checkAlphanum(alphaIdx, name, messages, dataKeys, personData);
+            checkAlphanum(alphaIdx, name, messages, dataKeys, personData, i+2, 50);
 
             //check zip
             const zip = dataKeys[5];
-            checkLeqNineDigits(name, zip, messages, personData);
+            checkLeqNineDigits(name, zip, messages, personData, false, i+2);
 
             //check contAcct
             const contAcct = dataKeys[0];
-            checkLeqNineDigits(name, contAcct, messages, personData);
+            checkLeqNineDigits(name, contAcct, messages, personData, false, i+2);
 
             //check SSN
             const ssn = dataKeys[8];
-            checkNineDigits(name, ssn, messages, personData);
+            checkNineDigits(name, ssn, messages, personData, i+2);
 
             //check LC Amount
             const lcAmount = dataKeys[7];
-            checkFloat(name, lcAmount, messages, personData);
+            checkFloat(name, lcAmount, messages, personData, i+2);
         }
+        checkAllPassed(messages, headerErrorPresent);
+        return messages;
+
+    }
+
+    //checks if a DSS_MISC file is formatted correctly
+    const checkDSS_MISC = (data) => {
+        console.log(data)
+        let messages = [];
+        const actualLabels = ["Withholding Code", "SSN", "Name", "Address", "City", "State", "Zip", "Compensation", "Comments", "System"];
+        const headerErrorMessage = `Selected file is not a 1099 MISC DSS file or file headers are incorrect. Please make sure that the right file was selected and that the headers match this order and casing: ${actualLabels. join(", ")}`;
+        let headerErrorPresent = false;
+
+        //for every item in the sheet
+        for (var i = 0; i < data.length; i++) {
+            var personData = data[i];
+            const dataKeys = Object.keys(data[0]);
+
+            //check if headers are correct
+            if (!checkHeaders(dataKeys, actualLabels, headerErrorMessage)) {
+                headerErrorPresent = true;
+                break;
+            }
+
+            //get the person's name
+            let name = personData[dataKeys[2]];
+
+            //check witholding code and state
+            let alphaIdx = [0];
+            checkAlphanum(alphaIdx, name, messages, dataKeys, personData, i+2, 100);
+
+            const state = dataKeys[5];
+            checkVarchar(name, state, messages, personData, i+2, 2);
+
+            //check name, address, city
+            alphaIdx = [2, 3, 4];
+            checkAlphanum(alphaIdx, name, messages, dataKeys, personData, i+2, 100);
+
+            //check zip
+            const zip = dataKeys[6];
+            checkLeqNineDigits(name, zip, messages, personData, true, i+2);
+
+            //check compensation
+            const compensation = dataKeys[7];
+            checkFloat(name, compensation, messages, personData, false, i+2);
+
+            //check SSN
+            const ssn = dataKeys[1];
+            checkNineDigits(name, ssn, messages, personData,i+2);
+
+            //check comments and system
+            alphaIdx = [8, 9];
+            checkAlphanum(alphaIdx, name, messages, dataKeys, personData, i+2, -1);
+        }
+        checkAllPassed(messages, headerErrorPresent);
         return messages;
 
     }
 
 
     //** OTHER FUNCTIONS **//
+
+    //sets allPassed to true if there is nothing in messages (the list of errors in the excel file), fase otherwise
+    const checkAllPassed = (messages, headerErrorPresent) => {
+        if(headerErrorPresent)    {
+            setAllPassed(false);
+        }
+        else if(messages.length == 0)    {
+            setAllPassed(true);
+        }
+        else{
+            setAllPassed(false);
+        }
+    }
 
     //function that executes appropriate check form function based on form type
     const checkForm = (data) => {
@@ -214,6 +369,9 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
         }
         if (formType == "ubo_int") {
             return checkUBO_INT(data);
+        }
+        if (formType == "dss_misc") {
+            return checkDSS_MISC(data);
         }
         else {
             throw new Error("Have not implemented yet");
@@ -244,7 +402,7 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
                 const workbook = XLSX.read(bufferArray, { type: 'buffer' })
                 const worksheetName = workbook.SheetNames[0]
                 const worksheet = workbook.Sheets[worksheetName];
-                const data = XLSX.utils.sheet_to_json(worksheet)
+                const data = XLSX.utils.sheet_to_json(worksheet, {defval:''});
 
                 resolve(data);
             };
@@ -256,6 +414,7 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
 
         //check the format of the items in the excel file
         promise.then((data) => {
+            console.log(data)
             let out = checkForm(data);
             setMessage(out);
         });
@@ -304,16 +463,5 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
         </Fragment>
     )
 }
-
-// {message ? message.map(reqs => (
-//     <div key={reqs.label}>
-//         <div>{reqs.label}</div>
-//         <div>{reqs.passes}</div>
-//     </div>
-// )) :
-//     <div>
-//         No Errors
-// </div>
-// }
 
 export default FileUploadAndChecker
