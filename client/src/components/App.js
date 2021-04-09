@@ -7,6 +7,10 @@ const App = () => {
   const [formType, setFormType] = useState(null);
   //error messages is an array of all possible interface errors (e.g. the user forgot to select a form type)
   const [errorMessages, setErrorMessages] = useState([]);
+  //clears the messages in the third section if true
+  const [clearMessages, setClearMessages] = useState(false);
+  //clears the filename in the choose file bar if true
+  const [clearFileName, setClearFileName] = useState(false);
 
   const formNames = {
     'cor_int': '1099 COR INT',
@@ -28,6 +32,19 @@ const App = () => {
     setErrorMessages([]);
   }
 
+  //clears error messages
+  const onClearMessages = (clear) => {
+    setClearMessages(clear);
+    console.log("on clear messages")
+  }
+
+  const onFormSelect = (formType) => {
+    setFormType(formType);
+    setErrorMessages([]);
+    setClearMessages(true);
+    setClearFileName(true);
+  }
+
   return (
 
     <div className="container mt-4">
@@ -41,37 +58,18 @@ const App = () => {
       <div className="container">
         <div className="card w-100">
           <div className="card-title mx-auto my-2 lead">1. Please select a form to check: </div>
-          <div className="row my-2">
-            <div className="btn-group mx-auto" role="group" aria-label="Choose Form Type">
-              {/* Select INT type form */}
-              <div className="btn-group" role="group">
-                <button id="INT" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  INT
-              </button>
-                <div className="dropdown-menu" aria-labelledby="INT">
-                  <button className="dropdown-item" onClick={() => setFormType("cor_int")}>COR</button>
-                  <button className="dropdown-item" onClick={() => setFormType("ubo_int")}>UBO</button>
-                </div>
-              </div>
-              {/* Select MISC type form */}
-              <div className="btn-group" rolw="group">
-                <button id="MISC" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  MISC
-                </button>
-                <div className="dropdown-menu" aria-labelledby="MISC">
-                  <button className="dropdown-item" onClick={() => setFormType("dss_misc")}>DSS</button>
-                  <button className="dropdown-item" onClick={() => setFormType("finance_misc")}>Finance</button>
-                </div>
-              </div>
-              {/* Select NEC type form */}
-              <div className="btn-group" rolw="group">
-                <button id="NEC" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  NEC
-              </button>
-                <div className="dropdown-menu" aria-labelledby="NEC">
-                  <button className="dropdown-item" onClick={() => setFormType("dss_nec")}>DSS</button>
-                  <button className="dropdown-item" onClick={() => setFormType("finance_nec")}>Finance</button>
-                </div>
+          <div className="row my-2 justify-content-center">
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Select A Form
+          </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item" onClick={() => onFormSelect("cor_int")}>COR INT</a>
+                <a class="dropdown-item" onClick={() => onFormSelect("ubo_int")}>UBO INT</a>
+                <a class="dropdown-item" onClick={() => onFormSelect("dss_misc")}>DSS MISC</a>
+                <a class="dropdown-item" onClick={() => onFormSelect("finance_misc")}>Finance MISC</a>
+                <a class="dropdown-item" onClick={() => onFormSelect("dss_nec")}>DSS NEC</a>
+                <a class="dropdown-item" onClick={() => onFormSelect("finance_nec")}>Finance NEC</a>
               </div>
             </div>
           </div>
@@ -86,7 +84,13 @@ const App = () => {
           </div>
         </div>
         <div className="row my-4">
-          <FileUploadAndChecker formType={formType} errorMessageFunct={setError} clearErrorFunct={clearError} />
+          <FileUploadAndChecker
+            formType={formType}
+            errorMessageFunct={setError}
+            clearErrorFunct={clearError}
+            onClearMessages={onClearMessages}
+            clearMessages={clearMessages}
+            clearFileName={clearFileName} />
         </div>
       </div>
     </div >
