@@ -88,7 +88,8 @@ const App = () => {
             formType={formType}
             errorMessageFunct={setError}
             clearErrorFunct={clearError}
-            onClearMessages={onClearMessages}
+            onClearMessages={setClearMessages}
+            onClearFileName={setClearFileName}
             clearMessages={clearMessages}
             clearFileName={clearFileName} />
         </div>

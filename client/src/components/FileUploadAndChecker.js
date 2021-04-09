@@ -2,7 +2,7 @@ import React, { Fragment, useState } from 'react';
 import XLSX from 'xlsx';
 import Message from './Message';
 
-export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFunct, onClearMessages, clearMessages, clearFileName }) => {
+export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFunct, onClearMessages, onClearFileName, clearMessages, clearFileName }) => {
     // list of objects that keeps track of which messages for each label
     // [{label: company name, passes: true}, {label: company address, passes: true}, ...]
     // true = formated correctly
@@ -624,6 +624,7 @@ export const FileUploadAndChecker = ({ formType, errorMessageFunct, clearErrorFu
                                 onClearMessages(false);
                                 try {
                                     const file = e.target.files[0];
+                                    onClearFileName(false);
                                     setFileName(file.name);
 
                                     //did a person decide what type of form that they want to check?
